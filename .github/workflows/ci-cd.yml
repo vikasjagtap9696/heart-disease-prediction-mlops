@@ -130,7 +130,7 @@ jobs:
       - name: Verify application health
         run: |
           sleep 10
-i
+
           curl --fail http://localhost:8000/health
 
           echo "FastAPI deployment successful"
