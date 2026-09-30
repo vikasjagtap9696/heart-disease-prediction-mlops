@@ -2,3 +2,5 @@ pandas==2.3.3
 fastapi==0.128.0
 pydantic==2.12.5
 mlflow==3.11.1
+uvicorn==0.40.0
+scikit-learn
