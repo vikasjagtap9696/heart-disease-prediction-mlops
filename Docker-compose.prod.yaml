@@ -1,0 +1,54 @@
+services:
+
+  mlflow:
+    image: 713500448033.dkr.ecr.ap-south-1.amazonaws.com/heart-disease-prediction-mlops:mlflow
+
+    ports:
+      - "5000:5000"
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./mlflow-data:/app
+
+
+  training-script:
+    image: 713500448033.dkr.ecr.ap-south-1.amazonaws.com/heart-disease-prediction-mlops:training
+
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+
+    depends_on:
+      mlflow:
+        condition: service_healthy
+
+
+  fastapi:
+    image: 713500448033.dkr.ecr.ap-south-1.amazonaws.com/heart-disease-prediction-mlops:fastapi
+
+    ports:
+      - "8000:8000"
+
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+
+    depends_on:
+      mlflow:
+        condition: service_healthy
+      training-script:
+        condition: service_completed_successfully
+
+    volumes:
+      - ./mlruns:/app/mlruns

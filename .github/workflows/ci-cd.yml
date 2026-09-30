@@ -110,3 +110,27 @@ jobs:
             --region $AWS_REGION \
             --query 'imageDetails[*].imageTags' \
             --output table
+
+
+      # ------------------------------------------------
+      # 11. Deploy Application from ECR
+      # ------------------------------------------------
+      - name: Deploy application
+        run: |
+          cd /home/ec2-user/heart-disease-prediction-mlops
+
+          docker-compose -f Docker-compose.prod.yaml pull
+
+          docker-compose -f Docker-compose.prod.yaml up -d --force-recreate
+
+
+      # ------------------------------------------------
+      # 12. Verify Deployment
+      # ------------------------------------------------
+      - name: Verify application health
+        run: |
+          sleep 10
+i
+          curl --fail http://localhost:8000/health
+
+          echo "FastAPI deployment successful"
