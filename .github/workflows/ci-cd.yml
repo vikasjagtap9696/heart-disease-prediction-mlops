@@ -1,0 +1,59 @@
+name: Heart Disease MLOps CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build FastAPI image
+        run: |
+          docker build \
+            -f API/Dockerfile \
+            -t ${{ steps.login-ecr.outputs.registry }}/heart-disease-prediction-mlops:fastapi .
+
+      - name: Build MLflow image
+        run: |
+          docker build \
+            -f Dockerfile \
+            -t ${{ steps.login-ecr.outputs.registry }}/heart-disease-prediction-mlops:mlflow .
+
+      - name: Build Training image
+        run: |
+          docker build \
+            -f scripts/Dockerfile \
+            -t ${{ steps.login-ecr.outputs.registry }}/heart-disease-prediction-mlops:training .
+
+      - name: Push FastAPI image
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/heart-disease-prediction-mlops:fastapi
+
+      - name: Push MLflow image
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/heart-disease-prediction-mlops:mlflow
+
+      - name: Push Training image
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/heart-disease-prediction-mlops:training
