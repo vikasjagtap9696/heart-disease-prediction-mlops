@@ -1,43 +1,61 @@
-
 services:
+
   mlflow:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
+
     ports:
       - "5000:5000"
+
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      test:
+        [
+          "CMD",
+          "python3",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 30s
-    volumes:      # persist mlflow data and artifacts on the host machine
+
+    volumes:
       - ./mlruns:/app/mlruns
       - ./mlflow-data:/app
 
+
   training-script:
-    build: 
+    build:
       context: .
       dockerfile: scripts/Dockerfile
+
     environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5000    # configure the tracking URI to point to the mlflow service
-    depends_on:                                   # ensure mlflow is healthy before starting the training script
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+
+    depends_on:
       mlflow:
         condition: service_healthy
 
+
   fastapi:
-    build: 
-      context:  .
-      dockerfile: api/Dockerfile
+    build:
+      context: .
+      dockerfile: API/Dockerfile
+
     ports:
       - "8000:8000"
+
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
-    depends_on:                                      # ensure mlflow is healthy and training script has completed successfully before starting the API
-      mlflow: 
+
+    depends_on:
+      mlflow:
         condition: service_healthy
+
       training-script:
         condition: service_completed_successfully
+
     volumes:
       - ./mlruns:/app/mlruns
