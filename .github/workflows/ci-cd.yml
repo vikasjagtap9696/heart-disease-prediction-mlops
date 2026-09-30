@@ -6,54 +6,107 @@ on:
       - main
 
 jobs:
+
   build-and-push:
-    runs-on: ubuntu-latest
+    name: Build and Push Docker Images
+    runs-on: [self-hosted, Linux, X64]
 
     permissions:
       contents: read
 
+    env:
+      AWS_REGION: ap-south-1
+      ECR_REPOSITORY: heart-disease-prediction-mlops
+
     steps:
 
+      # ------------------------------------------------
+      # 1. Checkout source code
+      # ------------------------------------------------
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
 
+      # ------------------------------------------------
+      # 2. Verify AWS IAM Role
+      # ------------------------------------------------
+      - name: Verify AWS Identity
+        run: |
+          aws sts get-caller-identity
+
+
+      # ------------------------------------------------
+      # 3. Login to Amazon ECR
+      # ------------------------------------------------
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+
+      # ------------------------------------------------
+      # 4. Build FastAPI Docker Image
+      # ------------------------------------------------
       - name: Build FastAPI image
         run: |
           docker build \
             -f API/Dockerfile \
-            -t ${{ steps.login-ecr.outputs.registry }}/heart-disease-prediction-mlops:fastapi .
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:fastapi .
 
+
+      # ------------------------------------------------
+      # 5. Build MLflow Docker Image
+      # ------------------------------------------------
       - name: Build MLflow image
         run: |
           docker build \
             -f Dockerfile \
-            -t ${{ steps.login-ecr.outputs.registry }}/heart-disease-prediction-mlops:mlflow .
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:mlflow .
 
+
+      # ------------------------------------------------
+      # 6. Build Training Docker Image
+      # ------------------------------------------------
       - name: Build Training image
         run: |
           docker build \
             -f scripts/Dockerfile \
-            -t ${{ steps.login-ecr.outputs.registry }}/heart-disease-prediction-mlops:training .
+            -t ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:training .
 
+
+      # ------------------------------------------------
+      # 7. Push FastAPI Image
+      # ------------------------------------------------
       - name: Push FastAPI image
         run: |
-          docker push ${{ steps.login-ecr.outputs.registry }}/heart-disease-prediction-mlops:fastapi
+          docker push \
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:fastapi
 
+
+      # ------------------------------------------------
+      # 8. Push MLflow Image
+      # ------------------------------------------------
       - name: Push MLflow image
         run: |
-          docker push ${{ steps.login-ecr.outputs.registry }}/heart-disease-prediction-mlops:mlflow
+          docker push \
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:mlflow
 
+
+      # ------------------------------------------------
+      # 9. Push Training Image
+      # ------------------------------------------------
       - name: Push Training image
         run: |
-          docker push ${{ steps.login-ecr.outputs.registry }}/heart-disease-prediction-mlops:training
+          docker push \
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:training
+
+
+      # ------------------------------------------------
+      # 10. Verify ECR Images
+      # ------------------------------------------------
+      - name: Verify ECR images
+        run: |
+          aws ecr describe-images \
+            --repository-name $ECR_REPOSITORY \
+            --region $AWS_REGION \
+            --query 'imageDetails[*].imageTags' \
+            --output table
