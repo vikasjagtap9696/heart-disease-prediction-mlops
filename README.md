@@ -208,3 +208,5 @@ model:
 - **FastAPI** — REST API for serving predictions
 - **Docker Compose** — service orchestration
 - **Pydantic** — input validation
+#   h e a r t - d i s e a s e - p r e d i c t i o n - m l o p s  
+ 
