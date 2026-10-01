@@ -119,8 +119,15 @@ jobs:
         run: |
           cd /home/ec2-user/heart-disease-prediction-mlops
 
+          # Automatically get ECR registry URI
+          export ECR_URI=${{ steps.login-ecr.outputs.registry }}
+
+          echo "ECR Registry: $ECR_URI"
+
+          # Pull latest images from ECR
           docker-compose -f Docker-compose.prod.yaml pull
 
+          # Recreate application containers
           docker-compose -f Docker-compose.prod.yaml up -d --force-recreate
 
 
