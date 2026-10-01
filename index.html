@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Heart Disease Prediction | MLOps</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #eef4ff, #f8fbff);
+      color: #172033;
+    }
+    .header {
+      background: linear-gradient(135deg, #173b8f, #2859c5);
+      color: white;
+      padding: 28px 20px;
+      text-align: center;
+      box-shadow: 0 4px 18px rgba(0,0,0,.12);
+    }
+    .header h1 { font-size: 30px; margin-bottom: 8px; }
+    .header p { opacity: .9; font-size: 15px; }
+    .container {
+      width: min(1100px, 94%);
+      margin: 30px auto 50px;
+    }
+    .status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 15px 20px;
+      border-radius: 14px;
+      box-shadow: 0 5px 20px rgba(25,55,100,.08);
+      margin-bottom: 22px;
+    }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      display: inline-block; margin-right: 8px;
+      background: #19a463;
+    }
+    .api-input {
+      width: 60%;
+      padding: 10px 12px;
+      border: 1px solid #ccd5e5;
+      border-radius: 8px;
+      outline: none;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 25px;
+      box-shadow: 0 8px 28px rgba(25,55,100,.09);
+    }
+    .card h2 {
+      font-size: 20px;
+      margin-bottom: 5px;
+      color: #173b8f;
+    }
+    .subtitle {
+      color: #69758a;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 7px;
+      color: #344054;
+    }
+    input, select {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #d4dce8;
+      border-radius: 9px;
+      background: #fbfcfe;
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus, select:focus, .api-input:focus {
+      border-color: #2859c5;
+      box-shadow: 0 0 0 3px rgba(40,89,197,.1);
+    }
+    .full { grid-column: 1 / -1; }
+    .predict-btn {
+      width: 100%;
+      margin-top: 20px;
+      border: 0;
+      padding: 14px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #173b8f, #2859c5);
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .predict-btn:hover { opacity: .93; }
+    .predict-btn:disabled { opacity: .6; cursor: wait; }
+    .result {
+      min-height: 250px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border: 2px dashed #dbe3f0;
+      border-radius: 14px;
+      padding: 25px;
+    }
+    .result-icon { font-size: 50px; margin-bottom: 12px; }
+    .result h3 { font-size: 24px; margin-bottom: 8px; }
+    .result p { color: #69758a; line-height: 1.5; }
+    .positive { color: #c62828; }
+    .negative { color: #16803c; }
+    .error { color: #c62828; }
+    .info {
+      margin-top: 20px;
+      padding: 13px;
+      background: #f1f6ff;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #52627a;
+      line-height: 1.5;
+    }
+    footer {
+      text-align: center;
+      color: #7b8799;
+      font-size: 12px;
+      margin-top: 25px;
+    }
+    @media (max-width: 760px) {
+      .grid, .form-grid { grid-template-columns: 1fr; }
+      .full { grid-column: auto; }
+      .status { flex-direction: column; gap: 12px; align-items: stretch; }
+      .api-input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <h1>❤️ Heart Disease Prediction</h1>
+  <p>MLOps-powered Machine Learning Prediction System</p>
+</header>
+
+<main class="container">
+
+  <div class="status">
+    <div><span class="status-dot"></span><strong>FastAPI API</strong> — Ready for prediction</div>
+    <input id="apiBase" class="api-input"
+           value="http://YOUR_EC2_PUBLIC_IP:8000"
+           aria-label="FastAPI base URL">
+  </div>
+
+  <div class="grid">
+
+    <section class="card">
+      <h2>Patient Information</h2>
+      <p class="subtitle">Enter the 13 features used by the trained model.</p>
+
+      <form id="predictionForm">
+        <div class="form-grid">
+
+          <div>
+            <label>Age</label>
+            <input type="number" id="age" value="55" min="1" max="120" required>
+          </div>
+
+          <div>
+            <label>Sex (0 = Female, 1 = Male)</label>
+            <input type="number" id="sex" value="1" min="0" max="1" required>
+          </div>
+
+          <div>
+            <label>Chest Pain Type (cp)</label>
+            <input type="number" id="cp" value="0" min="0" max="3" required>
+          </div>
+
+          <div>
+            <label>Resting BP (trestbps)</label>
+            <input type="number" id="trestbps" value="160" required>
+          </div>
+
+          <div>
+            <label>Cholesterol (chol)</label>
+            <input type="number" id="chol" value="289" required>
+          </div>
+
+          <div>
+            <label>Fasting Blood Sugar (fbs)</label>
+            <input type="number" id="fbs" value="0" min="0" max="1" required>
+          </div>
+
+          <div>
+            <label>Resting ECG (restecg)</label>
+            <input type="number" id="restecg" value="0" min="0" max="2" required>
+          </div>
+
+          <div>
+            <label>Maximum Heart Rate (thalach)</label>
+            <input type="number" id="thalach" value="145" required>
+          </div>
+
+          <div>
+            <label>Exercise Angina (exang)</label>
+            <input type="number" id="exang" value="1" min="0" max="1" required>
+          </div>
+
+          <div>
+            <label>Oldpeak</label>
+            <input type="number" id="oldpeak" value="0.8" step="0.1" required>
+          </div>
+
+          <div>
+            <label>Slope</label>
+            <input type="number" id="slope" value="1" min="0" max="2" required>
+          </div>
+
+          <div>
+            <label>CA</label>
+            <input type="number" id="ca" value="1" min="0" max="4" required>
+          </div>
+
+          <div class="full">
+            <label>Thal</label>
+            <input type="number" id="thal" value="3" min="0" max="3" required>
+          </div>
+
+        </div>
+
+        <button class="predict-btn" id="predictBtn" type="submit">
+          Predict Heart Disease
+        </button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Prediction Result</h2>
+      <p class="subtitle">Result returned by your FastAPI + MLflow model.</p>
+
+      <div class="result" id="result">
+        <div>
+          <div class="result-icon">🩺</div>
+          <h3>Ready</h3>
+          <p>Enter patient information and click<br><strong>Predict Heart Disease</strong>.</p>
+        </div>
+      </div>
+
+      <div class="info">
+        <strong>Note:</strong> This interface is for demonstrating the machine-learning
+        project and is not a medical diagnosis or a substitute for professional medical advice.
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    Heart Disease Prediction MLOps • FastAPI • MLflow • Docker • AWS ECR • EC2
+  </footer>
+</main>
+
+<script>
+  const form = document.getElementById("predictionForm");
+  const result = document.getElementById("result");
+  const button = document.getElementById("predictBtn");
+
+  function value(id) {
+    return document.getElementById(id).value;
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const baseUrl = document.getElementById("apiBase").value
+      .trim()
+      .replace(/\/+$/, "");
+
+    if (baseUrl.includes("YOUR_EC2_PUBLIC_IP")) {
+      result.innerHTML = `
+        <div class="error">
+          <div class="result-icon">⚠️</div>
+          <h3>Set EC2 Public IP</h3>
+          <p>Replace <strong>YOUR_EC2_PUBLIC_IP</strong> with your EC2 public IP.</p>
+        </div>`;
+      return;
+    }
+
+    const payload = {
+      age: Number(value("age")),
+      sex: Number(value("sex")),
+      cp: Number(value("cp")),
+      trestbps: Number(value("trestbps")),
+      chol: Number(value("chol")),
+      fbs: Number(value("fbs")),
+      restecg: Number(value("restecg")),
+      thalach: Number(value("thalach")),
+      exang: Number(value("exang")),
+      oldpeak: Number(value("oldpeak")),
+      slope: Number(value("slope")),
+      ca: Number(value("ca")),
+      thal: Number(value("thal"))
+    };
+
+    button.disabled = true;
+    button.textContent = "Predicting...";
+
+    result.innerHTML = `
+      <div>
+        <div class="result-icon">⏳</div>
+        <h3>Processing...</h3>
+        <p>Sending patient data to the FastAPI model.</p>
+      </div>`;
+
+    try {
+      const response = await fetch(`${baseUrl}/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`API returned HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const prediction = Number(data.prediction);
+
+      if (prediction === 1) {
+        result.innerHTML = `
+          <div class="positive">
+            <div class="result-icon">⚠️</div>
+            <h3>Prediction: Positive</h3>
+            <p>The model returned <strong>1</strong>.</p>
+            <p>This is a machine-learning prediction, not a medical diagnosis.</p>
+          </div>`;
+      } else {
+        result.innerHTML = `
+          <div class="negative">
+            <div class="result-icon">✅</div>
+            <h3>Prediction: Negative</h3>
+            <p>The model returned <strong>0</strong>.</p>
+            <p>This is a machine-learning prediction, not a medical diagnosis.</p>
+          </div>`;
+      }
+
+    } catch (error) {
+      result.innerHTML = `
+        <div class="error">
+          <div class="result-icon">❌</div>
+          <h3>API Connection Failed</h3>
+          <p>${error.message}</p>
+          <p>Check the EC2 IP, port 8000, Security Group, and FastAPI CORS configuration.</p>
+        </div>`;
+    } finally {
+      button.disabled = false;
+      button.textContent = "Predict Heart Disease";
+    }
+  });
+</script>
+
+</body>
+</html>
