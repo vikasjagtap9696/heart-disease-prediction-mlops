@@ -1,8 +1,7 @@
 services:
 
   mlflow:
-    image: 713500448033.dkr.ecr.ap-south-1.amazonaws.com/heart-disease-prediction-mlops:mlflow
-
+    image: ${ECR_URI}/heart-disease-prediction-mlops:mlflow
     ports:
       - "5000:5000"
 
@@ -25,7 +24,7 @@ services:
 
 
   training-script:
-    image: 713500448033.dkr.ecr.ap-south-1.amazonaws.com/heart-disease-prediction-mlops:training
+    image: ${ECR_URI}/heart-disease-prediction-mlops:training
 
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
@@ -36,7 +35,7 @@ services:
 
 
   fastapi:
-    image: 713500448033.dkr.ecr.ap-south-1.amazonaws.com/heart-disease-prediction-mlops:fastapi
+    image: ${ECR_URI}/heart-disease-prediction-mlops:fastapi
 
     ports:
       - "8000:8000"
@@ -47,6 +46,7 @@ services:
     depends_on:
       mlflow:
         condition: service_healthy
+
       training-script:
         condition: service_completed_successfully
 
