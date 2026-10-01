@@ -6,7 +6,7 @@ End-to-End Machine Learning and MLOps project using **Python, Scikit-learn, MLfl
 
 ## 🚀 Project Architecture
 
-![Heart Disease Prediction MLOps Architecture](docs/architecture.png)
+![Heart Disease Prediction MLOps Architecture](architecture.png)
 
 ### Architecture Flow
 
